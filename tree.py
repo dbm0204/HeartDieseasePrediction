@@ -18,9 +18,13 @@ from urllib.request import urlopen # Get data from UCI Machine Learning Reposito
 import plotly.graph_objs as go
 import plotly.plotly as py
 import plotly.tools as pt 
+import pydotplus
+from sklearn.tree import export_graphviz
+from sklearn.externals.six import StringIO
+from IPython.display import Image 
 
 plt.style.use('ggplot')
-pt.set_credentials_file(username='bmathew2014', api_key='bckdZ4APoakTageKPaJG')
+pt.set_credentials_file(username='dbm0204', api_key='7582Q9k8ReXNw4wfqdR8')
 
 # ### Import Data 
 # We imported the data directly from the UCI Machine Learning Repository website.
@@ -41,8 +45,7 @@ heartDisease.head()
 ## Exploratory Analysis 
 # Let's start with the exploratory analysis of our dataset. 
 # We don't want to predict on all the variables from the original data so we are getting rid of 'ca', 'slope', and 'thal'. For the variables we kept, there are still some "?" in the data, so we're going to replace them with a NAN. 
-# We can also see the data types of the variables in the data set. This way, we can differentiate between discrete or categorical representations of our variables. Although the entire set is numerical, some outputs of the datatypes are objects. 
-#
+# We can also see the data types of the variables in the data set. This way, we can differentiate between discrete or categorical representations of our variables. Although the entire set is numerical, some outputs of the datatypes are objects. #
 del heartDisease['ca']
 del heartDisease['slope']
 del heartDisease['thal']
@@ -91,8 +94,7 @@ py.iplot(plotdata)
 ## Preprocessing
 ### Normalizing Data
 # Everything else seems okay. So we begin the preprocessing of th data.
-# All of our data is numerical, so we are going to standardize the variables to approach our analysis more objectively. In doing so, the data is scaled to be only between 0 and 1, to objectify the distribution.  
-# 
+# All of our data is numerical, so we are going to standardize the variables to approach our analysis more objectively. In doing so, the data is scaled to be only between 0 and 1, to objectify the distribution.  # 
 for item in heartDisease: #converts everything to floats
     heartDisease[item] = pd.to_numeric(heartDisease[item])
 
@@ -108,7 +110,6 @@ toNormalize = ['age', 'cp', 'trestbps', 'chol', 'thalach', 'oldpeak'] #columns t
 heartDisease = normalize(heartDisease, toNormalize)
 heartDisease = heartDisease.dropna()
 heartDisease.head()
-
 # This is a classification problem, so to simplify our project we are going to convert the predictor
 # column into 1 for "heart disease is present" and 0 for "heart disease is not present."
 # Before, the scope of the disease ran from 0 - 5 for the intensity of the heart disease but this shit's too hard
@@ -151,11 +152,8 @@ test_class_set = test.ix[:, test.columns == 'heartdisease']
 ### Decision Trees
 # Decision trees have a hierarchical structure, where each leaf of the tree represents
 # a class label while the branches represent represent the process the tree used to deduce the class labels.
-dt = tree.DecisionTreeClassifier(criterion='gini',max_depth=None,splitter='random')
+dt = tree.DecisionTreeClassifier(criterion='entropy',max_depth=None,splitter='random')
 dt = dt.fit(train[['age', 'sex', 'cp','trestbps','chol','fbs','restecg','thalach','exang','oldpeak']], train['heartdisease'])
-
-#printing decision tree
-tree.export_graphviz(dt,out_file='tree.dot')
 
 predictions_dt = dt.predict(test[['age', 'sex', 'cp','trestbps','chol','fbs','restecg','thalach','exang','oldpeak']])
 predictright = 0
@@ -174,7 +172,7 @@ print("Here is our mean accuracy on the test set:\n",'%.3f' % (accuracy_dt * 100
 test_error_rate_dt = 1 - accuracy_dt
 print("The test error rate for our model is:\n",'%.3f' % (test_error_rate_dt * 100), '%')
 #ROC curve calculation
-fpr1, tpr1 ,_ = roc_curve(predictions_dt,test_class_set)
+fpr1, tpr1, _ = roc_curve(predictions_dt,test_class_set)
 
 #AUC curve Calculation
 auc_dt = auc(fpr1,tpr1)
