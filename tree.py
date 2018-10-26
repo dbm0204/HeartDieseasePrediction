@@ -5,20 +5,20 @@ import matplotlib.pyplot as plt # Visuals
 import seaborn as sns 
 import sklearn as skl
 import pandas as pd
-
+from sklearn.externals.six import StringIO
 from sklearn.cross_validation import train_test_split # Create training and test sets
 from sklearn.tree import DecisionTreeClassifier # Decision Trees
-from sklearn.tree import export_graphviz # Extract Decision Tree visual
-from sklearn.tree import tree 
+from sklearn import tree 
 from sklearn.metrics import roc_curve # ROC Curves
 from sklearn.metrics import auc # AUC 
 from sklearn.model_selection import KFold, cross_val_score #cross validation 
+from sklearn.model_selection import learning_curve
 from sklearn import cross_validation  #cross validation 
 from urllib.request import urlopen # Get data from UCI Machine Learning Repository
-
 import plotly.graph_objs as go
 import plotly.plotly as py
-import plotly.tools as pt
+import plotly.tools as pt 
+
 plt.style.use('ggplot')
 pt.set_credentials_file(username='bmathew2014', api_key='bckdZ4APoakTageKPaJG')
 
@@ -75,7 +75,6 @@ def classImbalance(item):
         print("The percentage of level", i, "in the response variable is: {0:.2f}".format(heartDisease_i)) 
  
 classImbalance('heartdisease')
-
 trace0 = go.Box(y=heartDisease['age'],name='age')
 trace1 = go.Box(y=heartDisease['sex'],name='sex')
 trace2 = go.Box(y=heartDisease['cp'],name='cp')
@@ -89,7 +88,6 @@ trace9 = go.Box(y=heartDisease['oldpeak'],name='oldpeak')
 trace10 = go.Box(y=heartDisease['heartdisease'],name='heart disease status')
 plotdata = [trace0, trace1, trace2, trace3, trace4, trace5, trace6, trace7, trace8, trace9, trace10]
 py.iplot(plotdata)
-
 ## Preprocessing
 ### Normalizing Data
 # Everything else seems okay. So we begin the preprocessing of th data.
@@ -115,13 +113,11 @@ heartDisease.head()
 # column into 1 for "heart disease is present" and 0 for "heart disease is not present."
 # Before, the scope of the disease ran from 0 - 5 for the intensity of the heart disease but this shit's too hard
 # so we're going to replace it.
-# In[32]:
 for i in range(1,5):
     heartDisease['heartdisease'] = heartDisease['heartdisease'].replace(i,1)
 
 ###### Boxplot visualization of the Transformed Dataset and the Distribution of the Attributes 
 f, ax = plt.subplots(figsize=(11, 15))
-
 ax.set_facecolor('#fafafa')
 plt.title("Box Plot of Transformed Data Set")
 ax.set(xlim=(-.05, 1.05))
@@ -151,16 +147,18 @@ class_set = train.ix[:, train.columns == 'heartdisease']
 # Next we create the test set doing the same process as the training set
 test_set = test.ix[:, test.columns != 'heartdisease']
 test_class_set = test.ix[:, test.columns == 'heartdisease']
+
 ### Decision Trees
-# 
 # Decision trees have a hierarchical structure, where each leaf of the tree represents
 # a class label while the branches represent represent the process the tree used to deduce the class labels.
-#
-dt = tree.DecisionTreeClassifier()
+dt = tree.DecisionTreeClassifier(criterion='gini',max_depth=None,splitter='random')
 dt = dt.fit(train[['age', 'sex', 'cp','trestbps','chol','fbs','restecg','thalach','exang','oldpeak']], train['heartdisease'])
+
+#printing decision tree
+tree.export_graphviz(dt,out_file='tree.dot')
+
 predictions_dt = dt.predict(test[['age', 'sex', 'cp','trestbps','chol','fbs','restecg','thalach','exang','oldpeak']])
 predictright = 0
-predictions_dt.shape[0]
 for i in range(0,predictions_dt.shape[0]-1):
     if (predictions_dt[i]== test.iloc[i][10]):
         predictright +=1
@@ -199,6 +197,3 @@ trace1 = go.Scatter(x=fpr1,y=tpr1,mode='lines',line=dict(color='darkorange', wid
 layout = go.Layout(title='Receiver operating characteristic example',xaxis=dict(title='False Positive Rate'),yaxis=dict(title='True Positive Rate'))
 fig = go.Figure(data=[trace1], layout=layout)
 py.iplot(fig)
-
-#ploting the validation curve
-
